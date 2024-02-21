@@ -14,5 +14,4 @@ class LocatorAvito:
     SELLER_NAME = (By.CSS_SELECTOR, "[data-marker='seller-info/label']")
     COMPANY_NAME = (By.CSS_SELECTOR, "[data-marker='seller-link/link']")
     COMPANY_NAME_TEXT = (By.CSS_SELECTOR, "span")
-    GEO = (By.CSS_SELECTOR, "[class*='style-item-address']")
 

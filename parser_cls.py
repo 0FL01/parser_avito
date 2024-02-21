@@ -21,7 +21,6 @@ class AvitoParse:
                  tg_token: str = None,
                  max_price: int = 0,
                  min_price: int = 0,
-                 geo: str = None,
                  debug_mode: int = 0
 
                  ):
@@ -33,14 +32,13 @@ class AvitoParse:
         self.title_file = self.__get_file_title()
         self.max_price = int(max_price)
         self.min_price = int(min_price)
-        self.geo = geo
         self.debug_mode = debug_mode
 
     def __get_url(self):
         self.driver.open(self.url)
 
         if "Доступ ограничен" in self.driver.get_title():
-            time.sleep(10)
+            time.sleep(60)
             raise Exception("Перезапуск из-за блокировки IP")
 
         self.driver.open_new_window()  # сразу открываем и вторую вкладку
@@ -52,7 +50,7 @@ class AvitoParse:
         self.__create_file_csv()
         while self.count > 0:
             self.__parse_page()
-            time.sleep(random.randint(5, 7))
+            time.sleep(random.randint(2, 2))
             """Проверяем есть ли кнопка далее"""
             if self.driver.find_elements(LocatorAvito.NEXT_BTN[1], by="css selector"):
                 self.driver.find_element(LocatorAvito.NEXT_BTN[1], by="css selector").click()
@@ -109,24 +107,19 @@ class AvitoParse:
             self.viewed_list.append(ads_id)
 
             """Определяем нужно ли нам учитывать ключевые слова"""
+            
             if self.keys_word != ['']:
                 if any([item.lower() in (description.lower() + name.lower()) for item in self.keys_word]) \
                         and \
                         self.min_price <= int(
                     price) <= self.max_price:
                     self.data.append(self.__parse_full_page(url, data))
-                    """Проверка адреса если нужно"""
-                    if self.geo and self.geo.lower() not in self.data[-1].get("geo", self.geo.lower()):
-                        continue
                     """Отправляем в телеграм"""
                     self.__pretty_log(data=data)
                     self.__save_data(data=data)
             elif self.min_price <= int(price) <= self.max_price:
 
                 self.data.append(self.__parse_full_page(url, data))
-                """Проверка адреса если нужно"""
-                if self.geo and self.geo.lower() not in self.data[-1].get("geo", self.geo.lower()):
-                    continue
                 """Отправляем в телеграм"""
                 self.__pretty_log(data=data)
                 self.__save_data(data=data)
@@ -151,7 +144,7 @@ class AvitoParse:
 
         """Если не дождались загрузки"""
         try:
-            self.driver.wait_for_element(LocatorAvito.TOTAL_VIEWS[1], by="css selector", timeout=10)
+            self.driver.wait_for_element(LocatorAvito.TOTAL_VIEWS[1], by="css selector", timeout=30)
         except Exception:
             """Проверка на бан по ip"""
             if "Доступ ограничен" in self.driver.get_title():
@@ -160,11 +153,6 @@ class AvitoParse:
             self.driver.switch_to_window(window=0)
             logger.debug("Не дождался загрузки страницы")
             return data
-
-        """Гео"""
-        if self.geo and self.driver.find_elements(LocatorAvito.GEO[1], by="css selector"):
-            geo = self.driver.find_element(LocatorAvito.GEO[1], by="css selector").text
-            data["geo"] = geo.lower()
 
         """Количество просмотров"""
         if self.driver.find_elements(LocatorAvito.TOTAL_VIEWS[1], by="css selector"):
@@ -205,7 +193,6 @@ class AvitoParse:
                 data.get("views", '-'),
                 data.get("date_public", '-'),
                 data.get("seller_name", 'no'),
-                data.get("geo", '-')
             ])
 
         """сохраняет просмотренные объявления"""
@@ -295,7 +282,6 @@ if __name__ == '__main__':
     keys = config["Avito"]["KEYS"]
     max_price = config["Avito"].get("MAX_PRICE", "0") or "0"
     min_price = config["Avito"].get("MIN_PRICE", "0") or "0"
-    geo = config["Avito"].get("GEO", "") or ""
 
     if token and chat_id:
         params = {
@@ -315,10 +301,9 @@ if __name__ == '__main__':
                 keysword_list=keys.split(","),
                 max_price=int(max_price),
                 min_price=int(min_price),
-                geo=geo
             ).parse()
             logger.info("Пауза")
-            time.sleep(int(freq) * 60)
+            time.sleep(int(freq) * 1)
         except Exception as error:
             logger.error(error)
             logger.error('Произошла ошибка, но работа будет продолжена через 30 сек. '
