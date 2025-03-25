@@ -75,6 +75,7 @@ class AvitoParse:
 
         logger.info(f"Открываю страницу: {self.url}")
         self.driver.open(self.url)
+        time.sleep(3)  # Добавляем паузу для полной загрузки страницы
 
         if "Доступ ограничен" in self.driver.get_title():
             self.ip_block()
@@ -305,13 +306,22 @@ class AvitoParse:
             with SB(uc=False,
                     headed=True if self.debug_mode else False,
                     headless2=True if not self.debug_mode else False,
-                    page_load_strategy="eager",
+                    page_load_strategy="normal",
                     block_images=True,
                     agent=random.choice(open("user_agent_pc.txt").readlines()),
                     proxy=self.proxy,
                     sjw=True if self.fast_speed else False,
                     ) as self.driver:
                 try:
+                    # Устанавливаем таймауты
+                    try:
+                        self.driver.set_default_timeout(30)  # Устанавливает общий таймаут
+                        self.driver.driver.set_page_load_timeout(30)  # Таймаут загрузки страницы
+                        self.driver.driver.implicitly_wait(30)  # Неявное ожидание элементов
+                        logger.debug("Таймауты установлены успешно")
+                    except Exception as e:
+                        logger.debug(f"Не удалось установить таймауты: {e}")
+                    
                     self.__get_url()
                     self.__paginator()
                 except StopEventException:
@@ -404,4 +414,3 @@ if __name__ == '__main__':
                          'Если ошибка повторится несколько раз - перезапустите скрипт.'
                          'Если и это не поможет - значит что-то сломалось')
             time.sleep(30)
-
