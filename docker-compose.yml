@@ -1,0 +1,23 @@
+services:
+  parser_avito:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      URL_AVITO: ""
+      CHAT_ID_TG: ""
+      TG_TOKEN: ""
+      NUM_ADS_AVITO: "1"
+      FREQ_AVITO: "660"
+      KEYS_AVITO: ""
+      MAX_PRICE_AVITO: ""
+      MIN_PRICE_AVITO: ""
+      GEO_AVITO: ""
+      PROXY_AVITO: ""
+      PROXY_CHANGE_IP_AVITO: ""
+      NEED_MORE_INFO_AVITO: "1"
+      DEBUG_MODE_AVITO: "1"
+      FAST_SPEED_AVITO: "0"
+      MAX_VIEW_AVITO: ""
+    entrypoint: ["sh", "entrypoint.sh"]
+
