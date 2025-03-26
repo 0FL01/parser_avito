@@ -1,2 +1,4 @@
 # created by virtualenv automatically
 .secret.txt
+settings.ini
+docker-compose.yml
