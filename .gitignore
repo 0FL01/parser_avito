@@ -2,3 +2,4 @@
 .secret.txt
 settings.ini
 docker-compose.yml
+.env
