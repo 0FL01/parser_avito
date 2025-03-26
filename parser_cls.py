@@ -315,12 +315,14 @@ class AvitoParse:
                 try:
                     # Устанавливаем таймауты
                     try:
-                        self.driver.set_default_timeout(60)  # Увеличиваем общий таймаут
-                        self.driver.driver.set_page_load_timeout(60)  # Увеличиваем таймаут загрузки страницы
-                        self.driver.driver.implicitly_wait(20)  # Уменьшаем неявное ожидание для более быстрого падения
+                        # Увеличиваем таймауты для слабых процессоров
+                        self.driver.set_default_timeout(120)  # Общий таймаут увеличен до 120 сек
+                        self.driver.driver.set_page_load_timeout(120)  # Таймаут загрузки страницы увеличен до 120 сек
+                        self.driver.driver.implicitly_wait(30)  # Неявное ожидание увеличено до 30 сек
                         logger.debug("Таймауты установлены успешно")
                     except Exception as e:
                         logger.debug(f"Не удалось установить таймауты: {e}")
+                        # Продолжаем работу даже если не удалось установить таймауты
                     
                     self.__get_url()
                     self.__paginator()
