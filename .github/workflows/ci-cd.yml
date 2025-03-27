@@ -46,28 +46,28 @@ jobs:
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
             mkdir -p ${{ secrets.APP_LOCATION }} && \
             cd ${{ secrets.APP_LOCATION }} && \
+            echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > .env && \
+            echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> .env && \
+            echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> .env && \
+            echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO }}' >> .env && \
+            echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO }}' >> .env && \
+            echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO }}' >> .env && \
+            echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO }}' >> .env && \
+            echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO }}' >> .env && \
+            echo 'GEO_AVITO=${{ secrets.GEO_AVITO }}' >> .env && \
+            echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO }}' >> .env && \
+            echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO }}' >> .env && \
+            echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> .env && \
+            echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> .env && \
+            echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
+            echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
             echo 'version: \"3\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
             echo '  avito-parser:' >> docker-compose.yml && \
             echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}' >> docker-compose.yml && \
             echo '    container_name: avito-parser' >> docker-compose.yml && \
             echo '    restart: unless-stopped' >> docker-compose.yml && \
-            echo '    environment:' >> docker-compose.yml && \
-            echo '      - URL_AVITO=\$URL_AVITO' >> docker-compose.yml && \
-            echo '      - CHAT_ID_TG=\$CHAT_ID_TG' >> docker-compose.yml && \
-            echo '      - TG_TOKEN=\$TG_TOKEN' >> docker-compose.yml && \
-            echo '      - NUM_ADS_AVITO=\$NUM_ADS_AVITO' >> docker-compose.yml && \
-            echo '      - FREQ_AVITO=\$FREQ_AVITO' >> docker-compose.yml && \
-            echo '      - KEYS_AVITO=\$KEYS_AVITO' >> docker-compose.yml && \
-            echo '      - MAX_PRICE_AVITO=\$MAX_PRICE_AVITO' >> docker-compose.yml && \
-            echo '      - MIN_PRICE_AVITO=\$MIN_PRICE_AVITO' >> docker-compose.yml && \
-            echo '      - NEED_MORE_INFO_AVITO=\"1\"' >> docker-compose.yml && \
-            echo '      - DEBUG_MODE_AVITO=\"1\"' >> docker-compose.yml && \
-            echo '      - FAST_SPEED_AVITO=\"0\"' >> docker-compose.yml && \
-            echo '      - GEO_AVITO=\"\"' >> docker-compose.yml && \
-            echo '      - PROXY_AVITO=\"\"' >> docker-compose.yml && \
-            echo '      - MAX_VIEW_AVITO=\"\"' >> docker-compose.yml && \
-            echo '      - KEYS_BLACK_AVITO=\$KEYS_BLACK_AVITO' >> docker-compose.yml && \
+            echo '    env_file: .env' >> docker-compose.yml && \
             docker compose pull && \
             docker compose down && \
             docker compose up -d && \
