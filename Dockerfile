@@ -22,7 +22,7 @@ COPY db_service.py /parse_avito/db_service.py
 COPY lang.py /parse_avito/lang.py
 COPY locator.py /parse_avito/locator.py
 COPY parser_cls.py /parse_avito/parser_cls.py
-#COPY settings.ini /parse_avito/settings.ini
+COPY settings.ini /parse_avito/settings.ini
 COPY user_agent_pc.txt /parse_avito/user_agent_pc.txt
 COPY xlsx_service.py /parse_avito/xlsx_service.py
 COPY entrypoint.sh /parse_avito/entrypoint.sh
