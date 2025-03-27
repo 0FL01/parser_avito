@@ -53,21 +53,22 @@ jobs:
             echo '    container_name: avito-parser' >> docker-compose.yml && \
             echo '    restart: unless-stopped' >> docker-compose.yml && \
             echo '    environment:' >> docker-compose.yml && \
-            echo '      - URL_AVITO=$URL_AVITO' >> docker-compose.yml && \
-            echo '      - CHAT_ID_TG=$CHAT_ID_TG' >> docker-compose.yml && \
-            echo '      - TG_TOKEN=$TG_TOKEN' >> docker-compose.yml && \
-            echo '      - NUM_ADS_AVITO=$NUM_ADS_AVITO' >> docker-compose.yml && \
-            echo '      - FREQ_AVITO=$FREQ_AVITO' >> docker-compose.yml && \
-            echo '      - KEYS_AVITO=$KEYS_AVITO' >> docker-compose.yml && \
-            echo '      - MAX_PRICE_AVITO=$MAX_PRICE_AVITO' >> docker-compose.yml && \
-            echo '      - MIN_PRICE_AVITO=$MIN_PRICE_AVITO' >> docker-compose.yml && \
-            echo '      - NEED_MORE_INFO_AVITO: "1"' >> docker-compose.yml && \
-            echo '      - DEBUG_MODE_AVITO: "1"' >> docker-compose.yml && \
-            echo '      - FAST_SPEED_AVITO: "0"' >> docker-compose.yml && \
-            echo '      - GEO_AVITO: ""' >> docker-compose.yml && \
-            echo '      - PROXY_AVITO: ""' >> docker-compose.yml && \
-            echo '      - MAX_VIEW_AVITO: ""' >> docker-compose.yml && \
-            echo '      - KEYS_BLACK_AVITO=$KEYS_BLACK_AVITO' >> docker-compose.yml && \
+            echo '      - URL_AVITO=\$URL_AVITO' >> docker-compose.yml && \
+            echo '      - CHAT_ID_TG=\$CHAT_ID_TG' >> docker-compose.yml && \
+            echo '      - TG_TOKEN=\$TG_TOKEN' >> docker-compose.yml && \
+            echo '      - NUM_ADS_AVITO=\$NUM_ADS_AVITO' >> docker-compose.yml && \
+            echo '      - FREQ_AVITO=\$FREQ_AVITO' >> docker-compose.yml && \
+            echo '      - KEYS_AVITO=\$KEYS_AVITO' >> docker-compose.yml && \
+            echo '      - MAX_PRICE_AVITO=\$MAX_PRICE_AVITO' >> docker-compose.yml && \
+            echo '      - MIN_PRICE_AVITO=\$MIN_PRICE_AVITO' >> docker-compose.yml && \
+            echo '      - NEED_MORE_INFO_AVITO=\"1\"' >> docker-compose.yml && \
+            echo '      - DEBUG_MODE_AVITO=\"1\"' >> docker-compose.yml && \
+            echo '      - FAST_SPEED_AVITO=\"0\"' >> docker-compose.yml && \
+            echo '      - GEO_AVITO=\"\"' >> docker-compose.yml && \
+            echo '      - PROXY_AVITO=\"\"' >> docker-compose.yml && \
+            echo '      - MAX_VIEW_AVITO=\"\"' >> docker-compose.yml && \
+            echo '      - KEYS_BLACK_AVITO=\$KEYS_BLACK_AVITO' >> docker-compose.yml && \
+            docker compose pull && \
             docker compose down && \
             docker compose up -d && \
             docker logs avito-parser
