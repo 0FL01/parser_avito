@@ -61,12 +61,12 @@ jobs:
             echo '      - KEYS_AVITO=$KEYS_AVITO' >> docker-compose.yml && \
             echo '      - MAX_PRICE_AVITO=$MAX_PRICE_AVITO' >> docker-compose.yml && \
             echo '      - MIN_PRICE_AVITO=$MIN_PRICE_AVITO' >> docker-compose.yml && \
-            echo '      - NEED_MORE_INFO_AVITO="1" >> docker-compose.yml && \
-            echo '      - DEBUG_MODE_AVITO="1" >> docker-compose.yml && \
-            echo '      - FAST_SPEED_AVITO="0" >> docker-compose.yml && \
-            echo '      - GEO_AVITO="" >> docker-compose.yml && \
-            echo '      - PROXY_AVITO="" >> docker-compose.yml && \            
-            echo '      - MAX_VIEW_AVITO="" >> docker-compose.yml && \
+            echo '      - NEED_MORE_INFO_AVITO: "1"' >> docker-compose.yml && \
+            echo '      - DEBUG_MODE_AVITO: "1"' >> docker-compose.yml && \
+            echo '      - FAST_SPEED_AVITO: "0"' >> docker-compose.yml && \
+            echo '      - GEO_AVITO: ""' >> docker-compose.yml && \
+            echo '      - PROXY_AVITO: ""' >> docker-compose.yml && \
+            echo '      - MAX_VIEW_AVITO: ""' >> docker-compose.yml && \
             echo '      - KEYS_BLACK_AVITO=$KEYS_BLACK_AVITO' >> docker-compose.yml && \
             docker compose down && \
             docker compose up -d && \
