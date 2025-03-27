@@ -1,7 +1,6 @@
 FROM python:3 AS build
 
 LABEL developer="Duff89"
-LABEL maintainer="armrus.org"
 
 # Installing required build packages
 RUN set -ex && \
@@ -18,7 +17,6 @@ ENV PATH="/usr/local/bin:$PATH"
 ENV LANG="C.UTF-8"
 
 COPY requirements.txt /parse_avito/requirements.txt
-# COPY AvitoParser.py /parse_avito/AvitoParser.py
 COPY custom_exception.py /parse_avito/custom_exception.py
 COPY db_service.py /parse_avito/db_service.py
 COPY lang.py /parse_avito/lang.py
@@ -30,26 +28,6 @@ COPY xlsx_service.py /parse_avito/xlsx_service.py
 COPY entrypoint.sh /parse_avito/entrypoint.sh
 COPY version.py /parse_avito/version.py
 RUN chmod +x /parse_avito/entrypoint.sh
-
-# будем собирать из параметров для создания контейнера
-ENV URL_AVITO="https://www.avito.ru/sankt-peterburg/tovary_dlya_kompyutera?cd=1&q=%%D0%%B2%%D0%%B8%%D0%%B4%%D0%%B5%%D0%%BE%%D0%%BA%%D0%%B0%%D1%%80%%D1%%82%%D0%%B0+rtx"
-ENV CHAT_ID_TG=0
-ENV TG_TOKEN=""
-ENV NUM_ADS_AVITO=3
-ENV FREQ_AVITO=60
-ENV KEYS_AVITO=""
-ENV KEYS_BLACKS_AVITO=""
-ENV MAX_PRICE_AVITO=200000000
-ENV MIN_PRICE_AVITO=0
-ENV GEO_AVITO=""
-ENV PROXY_AVITO=""
-ENV PROXY_CHANGE_IP_AVITO=""
-ENV NEED_MORE_INFO_AVITO=1
-ENV DEBUG_MODE_AVITO=1
-ENV FAST_SPEED_AVITO=1
-ENV MAX_VIEW_AVITO=0
-ENV KEYS_BLACK_AVITO=""
-
 
 WORKDIR /parse_avito
 RUN pip install -r requirements.txt
