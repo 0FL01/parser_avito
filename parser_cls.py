@@ -88,10 +88,13 @@ class AvitoParse:
             if self.stop_event.is_set():
                 break
             try:
-                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            except Exception:
-                pass
-            time.sleep(1)
+                time.sleep(0.5)  # Small delay before scrolling
+                # Scroll in smaller increments to be gentler on slower machines
+                self.driver.execute_script("window.scrollBy(0, 500);")
+                time.sleep(0.5)  # Small delay after scrolling
+            except Exception as e:
+                logger.debug(f"Scroll error: {e}")
+                continue  # Skip to next iteration if scroll fails
             self.__parse_page()
             time.sleep(random.randint(2, 4))
             self.open_next_btn()
@@ -318,6 +321,7 @@ class AvitoParse:
                         # Увеличиваем таймауты для слабых процессоров
                         self.driver.set_default_timeout(120)  # Общий таймаут увеличен до 120 сек
                         self.driver.driver.set_page_load_timeout(120)  # Таймаут загрузки страницы увеличен до 120 сек
+                        self.driver.driver.set_script_timeout(120) # Таймаут выполнения скрипта увеличен до 120 сек
                         self.driver.driver.implicitly_wait(30)  # Неявное ожидание увеличено до 30 сек
                         logger.debug("Таймауты установлены успешно")
                     except Exception as e:
