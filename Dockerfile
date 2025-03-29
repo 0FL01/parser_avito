@@ -43,10 +43,10 @@ RUN set -ex && \
         libxrandr2 \
         xdg-utils \
         libu2f-udev \
-        libvulkan1 && \
+        libvulkan1 \
+        libcurl4 && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     dpkg -i --force-depends google-chrome-stable_current_amd64.deb || apt-get install -f -y --no-install-recommends && \
-    # Clean up
     apt-get autoremove -y --purge wget && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /google-chrome-stable_current_amd64.deb
