@@ -15,6 +15,24 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      URL_AVITO: ${{ secrets.URL_AVITO }}
+      CHAT_ID_TG: ${{ secrets.CHAT_ID_TG }}
+      TG_TOKEN: ${{ secrets.TG_TOKEN }}
+      NUM_ADS_AVITO: ${{ secrets.NUM_ADS_AVITO }}
+      FREQ_AVITO: ${{ secrets.FREQ_AVITO }}
+      KEYS_AVITO: ${{ secrets.KEYS_AVITO }}
+      MAX_PRICE_AVITO: ${{ secrets.MAX_PRICE_AVITO }}
+      MIN_PRICE_AVITO: ${{ secrets.MIN_PRICE_AVITO }}
+      GEO_AVITO: ${{ secrets.GEO_AVITO }}
+      PROXY_AVITO: ${{ secrets.PROXY_AVITO }}
+      PROXY_CHANGE_IP_AVITO: ${{ secrets.PROXY_CHANGE_IP_AVITO }}
+      NEED_MORE_INFO_AVITO: ${{ secrets.NEED_MORE_INFO_AVITO }}
+      DEBUG_MODE_AVITO: ${{ secrets.DEBUG_MODE_AVITO }}
+      FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
+      KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
+      MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v3
 
@@ -29,11 +47,9 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest pytest-cov pytest-mock # Install testing libraries
 
-      - name: Run unit tests
+      - name: Run tests
         run: |
-          pytest tests/unit --cov=./ --cov-report=xml
-        env:
-          PYTHONPATH: ${{ github.workspace }} # Ensure modules can be imported
+          pytest tests/ --cov=./ --cov-report=xml
 
       # Optional: Upload coverage report if using Codecov or similar
       # - name: Upload coverage
@@ -54,10 +70,108 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
+          push: false
+          load: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Test Docker container
+        run: |
+          #!/bin/bash
+          set -e # Exit immediately if a command exits with a non-zero status.
+
+          CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID}"
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}"
+          ENV_FILE=".env.test"
+          # SUCCESS_PATTERN="Парсинг завершен" # Using exact match below
+          TIMEOUT_SECONDS=180 # 3 minutes timeout
+          CHECK_INTERVAL=10
+
+          # Create .env file for the test container
+          echo "Creating $ENV_FILE..."
+          echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
+          echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> $ENV_FILE
+          echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> $ENV_FILE
+          echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO }}' >> $ENV_FILE
+          echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO }}' >> $ENV_FILE
+          echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO }}' >> $ENV_FILE
+          echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO }}' >> $ENV_FILE
+          echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO }}' >> $ENV_FILE
+          echo 'GEO_AVITO=${{ secrets.GEO_AVITO }}' >> $ENV_FILE
+          echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO }}' >> $ENV_FILE
+          echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO }}' >> $ENV_FILE
+          echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> $ENV_FILE
+          echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
+          echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
+          echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE # Use correct secret name
+          echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
+          echo "$ENV_FILE created."
+
+          # Cleanup function to stop/remove container and delete env file
+          cleanup() {
+            echo "Cleaning up test container $CONTAINER_NAME..."
+            docker stop $CONTAINER_NAME || echo "Container $CONTAINER_NAME was not running."
+            docker rm $CONTAINER_NAME || echo "Container $CONTAINER_NAME could not be removed (may already be gone)."
+            rm -f $ENV_FILE
+            echo "Cleanup finished."
+          }
+          # Register the cleanup function to run on script exit (success or failure)
+          trap cleanup EXIT
+
+          # Run the container in detached mode
+          echo "Starting container $CONTAINER_NAME from image $IMAGE_TAG..."
+          docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE $IMAGE_TAG
+
+          # Wait for the container to produce the success log or timeout/crash
+          echo "Waiting up to $TIMEOUT_SECONDS seconds for container to produce 'Парсинг завершен' in logs..."
+          SECONDS=0
+          SUCCESS=false
+          while [ $SECONDS -lt $TIMEOUT_SECONDS ]; do
+            # Check if container is still running
+            if ! docker ps -q -f name=^/${CONTAINER_NAME}$; then
+              echo "Error: Container $CONTAINER_NAME stopped unexpectedly."
+              echo "--- Container Logs ---"
+              docker logs $CONTAINER_NAME || echo "Could not retrieve logs for stopped container."
+              echo "----------------------"
+              exit 1 # Exit with failure
+            fi
+
+            # Check logs for the success pattern
+            # Using grep -F for fixed string matching, -q for quiet mode
+            if docker logs $CONTAINER_NAME 2>&1 | grep -q -F "Парсинг завершен"; then
+              echo "Success: Found 'Парсинг завершен' in logs."
+              echo "--- Container Logs (Last 20 lines) ---"
+              docker logs $CONTAINER_NAME | tail -n 20
+              echo "--------------------------------------"
+              SUCCESS=true
+              break # Exit the loop on success
+            fi
+
+            sleep $CHECK_INTERVAL
+            SECONDS=$((SECONDS + CHECK_INTERVAL))
+            echo "Still waiting... ($SECONDS/$TIMEOUT_SECONDS seconds)"
+          done
+
+          # Check if the loop exited due to success or timeout
+          if [ "$SUCCESS" = false ]; then
+            echo "Error: Timeout ($TIMEOUT_SECONDS seconds) reached waiting for 'Парсинг завершен'."
+            echo "--- Container Logs ---"
+            docker logs $CONTAINER_NAME || echo "Could not retrieve logs for running container."
+            echo "----------------------"
+            exit 1 # Exit with failure
+          fi
+
+          # If success, trap will handle cleanup. Exit 0 explicitly.
+          exit 0
+
+      - name: Push Docker image
+        if: success()
+        uses: docker/build-push-action@v4
+        with:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
