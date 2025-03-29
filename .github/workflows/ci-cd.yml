@@ -60,6 +60,7 @@ jobs:
             echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> .env && \
             echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> .env && \
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
+            echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
             echo 'version: \"3\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
