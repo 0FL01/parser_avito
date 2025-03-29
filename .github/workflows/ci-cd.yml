@@ -147,7 +147,7 @@ jobs:
           echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
           echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
           # Исправлено имя переменной секрета на KEYS_BLACK_AVITO
-          echo 'keys_black=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
+          echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
           echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
           echo "$ENV_FILE created."
 
