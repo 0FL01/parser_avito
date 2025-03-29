@@ -46,7 +46,7 @@ class AvitoParse:
         self.data = []
         self.tg_token = tg_token
         self.title_file = self.__get_file_title()
-        self.max_price = int(max_price)F
+        self.max_price = int(max_price)
         self.min_price = int(min_price)
         self.max_views = max_views if max_views and max_views != 0 else None
         self.geo = geo
