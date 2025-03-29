@@ -210,6 +210,7 @@ jobs:
     # Задание для деплоя приложения на сервер
     needs: build-and-test-container # Запускается только после успеха 'build-and-test-container'
     runs-on: ubuntu-latest
+    environment: dev
     steps:
       # 1. Checkout нужен для использования actions, например, ssh-key-action
       - uses: actions/checkout@v3
