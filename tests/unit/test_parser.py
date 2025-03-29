@@ -14,7 +14,9 @@ def test_avito_parse_initialization():
 
     # Minimal required parameters for initialization
     parser = AvitoParse(
-        url="http://example.com",
+        url=["http://example.com"],
+        keysword_list=[],
+        keysword_black_list=[],
         count=10,
         stop_event=mock_stop_event,
         db_handler=mock_db_handler,
@@ -22,7 +24,7 @@ def test_avito_parse_initialization():
     )
 
     assert isinstance(parser, AvitoParse)
-    assert parser.url == "http://example.com"
+    assert parser.url_list == ["http://example.com"]
     assert parser.count == 10
     assert parser.stop_event == mock_stop_event
     assert parser.db_handler == mock_db_handler

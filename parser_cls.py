@@ -34,7 +34,9 @@ class AvitoParse:
                  proxy_change_url: str = None,
                  stop_event=None,
                  max_views: int = None,
-                 fast_speed: int = 0
+                 fast_speed: int = 0,
+                 db_handler=None,
+                 xlsx_handler=None
                  ):
         self.url_list = url
         self.url = None
@@ -53,8 +55,8 @@ class AvitoParse:
         self.proxy = proxy
         self.proxy_change_url = proxy_change_url
         self.stop_event = stop_event or threading.Event()
-        self.db_handler = SQLiteDBHandler()
-        self.xlsx_handler = XLSXHandler(self.title_file)
+        self.db_handler = db_handler or SQLiteDBHandler()
+        self.xlsx_handler = xlsx_handler or XLSXHandler(self.title_file)
         self.fast_speed = fast_speed
 
     @property
