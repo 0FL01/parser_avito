@@ -48,7 +48,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4 # Обновляем версию action
+        with:
+          path: ~/.cache/pip # Путь к кэшу pip
+            # Ключ кэша включает ОС, версию Python и хеш requirements.txt
+            # При изменении requirements.txt кэш будет пересоздан
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+              ${{ runner.os }}-pip-
 
       # 3. Устанавливаем зависимости проекта и тестовые библиотеки
       - name: Install dependencies
@@ -61,6 +71,14 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/ --cov=./ --cov-report=xml
+
+      # Шаг для загрузки отчета о покрытии как артефакта
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4 # Обновляем версию action
+        with:
+          name: coverage-report # Имя артефакта
+          path: coverage.xml # Путь к файлу отчета
+          if-no-files-found: error # Завершить с ошибкой, если файл не найден
 
   build-and-test-container:
     # Задание для сборки Docker-образа и его тестового запуска
