@@ -16,7 +16,6 @@ def test_avito_parse_initialization():
     parser = AvitoParse(
         url="http://example.com",
         count=10,
-        version="test_version",
         stop_event=mock_stop_event,
         db_handler=mock_db_handler,
         xlsx_handler=mock_xlsx_handler
@@ -25,7 +24,6 @@ def test_avito_parse_initialization():
     assert isinstance(parser, AvitoParse)
     assert parser.url == "http://example.com"
     assert parser.count == 10
-    assert parser.version == "test_version"
     assert parser.stop_event == mock_stop_event
     assert parser.db_handler == mock_db_handler
     assert parser.xlsx_handler == mock_xlsx_handler
