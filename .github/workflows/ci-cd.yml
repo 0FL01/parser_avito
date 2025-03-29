@@ -149,6 +149,11 @@ jobs:
           # Исправлено имя переменной секрета на KEYS_BLACK_AVITO
           echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
           echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
+          # Создаем settings.ini и добавляем ключ keys_black из секрета
+          # Файл будет создан или перезаписан с секцией [Avito] и этим ключом.
+          # Предполагается, что приложение затем дополнит этот файл остальными настройками.
+          echo '[Avito]' > settings.ini && \
+          echo 'keys_black = ${{ secrets.KEYS_BLACK_AVITO }}' >> settings.ini && \
           echo "$ENV_FILE created."
 
           # Функция очистки для остановки/удаления контейнера и файла .env
@@ -265,7 +270,7 @@ jobs:
             echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> .env && \
             echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> .env && \
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
-            echo 'keys_black=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
+            echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
             # Создаем docker-compose.yml на сервере
             echo 'version: \"3.8\"' > docker-compose.yml && \
