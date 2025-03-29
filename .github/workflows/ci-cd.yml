@@ -147,7 +147,7 @@ jobs:
           echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
           echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
           # Исправлено имя переменной секрета на KEYS_BLACK_AVITO
-          echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
+          echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
           echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
           echo "$ENV_FILE created."
 
@@ -265,7 +265,7 @@ jobs:
             echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> .env && \
             echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> .env && \
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
-            echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
+            echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
             # Создаем docker-compose.yml на сервере
             echo 'version: \"3.8\"' > docker-compose.yml && \
