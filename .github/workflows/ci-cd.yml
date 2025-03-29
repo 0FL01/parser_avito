@@ -2,20 +2,26 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ dev ] # Assuming 'dev' is the correct branch based on the file content
+    branches: [ dev ] # Убедитесь, что это правильная ветка
   pull_request:
-    branches: [ dev ] # Assuming 'dev' is the correct branch
+    branches: [ dev ] # Убедитесь, что это правильная ветка
 
 env:
+  # Имя вашего образа Docker
   DOCKER_IMAGE_NAME: avito-parser
+  # Ваш логин на Docker Hub из секретов GitHub
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  # Версия образа, используем SHA коммита для уникальности
   VERSION: ${{ github.sha }}
-  SHORT_VERSION: ${{ github.sha }}
+  # Короткая версия SHA (если нужна, сейчас совпадает с полной)
+  # SHORT_VERSION: ${{ github.sha }} # Можно использовать github.sha:7 для короткого хеша
 
 jobs:
   test:
+    # Задание для запуска юнит/интеграционных тестов кода Python
     runs-on: ubuntu-latest
     env:
+      # Переменные окружения для тестов, получаемые из секретов
       URL_AVITO: ${{ secrets.URL_AVITO }}
       CHAT_ID_TG: ${{ secrets.CHAT_ID_TG }}
       TG_TOKEN: ${{ secrets.TG_TOKEN }}
@@ -32,45 +38,63 @@ jobs:
       FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
       KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
       MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
+      # Добавляем PYTHONPATH, чтобы pytest мог найти модули приложения
       PYTHONPATH: ${{ github.workspace }}
     steps:
+      # 1. Получаем код из репозитория
       - uses: actions/checkout@v3
 
+      # 2. Настраиваем окружение Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # Using a common Python version, adjust if needed
+          python-version: '3.10' # Укажите вашу версию Python
 
+      # 3. Устанавливаем зависимости проекта и тестовые библиотеки
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest pytest-cov pytest-mock # Install testing libraries
+          pip install pytest pytest-cov pytest-mock # Устанавливаем pytest и его плагины
 
+      # 4. Запускаем тесты с помощью pytest и собираем отчет о покрытии
       - name: Run tests
         run: |
           pytest tests/ --cov=./ --cov-report=xml
 
-      # Optional: Upload coverage report if using Codecov or similar
-      # - name: Upload coverage
+      # Опционально: Загрузка отчета о покрытии (если используете Codecov и т.п.)
+      # - name: Upload coverage to Codecov
       #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }} # Добавьте секрет CODECOV_TOKEN
+      #     file: ./coverage.xml
+      #     flags: unittests
+      #     name: codecov-umbrella
+      #     fail_ci_if_error: true
 
-  build-and-deploy:
-    needs: test # Ensure tests pass before building and deploying
+  build-and-test-container:
+    # Задание для сборки Docker-образа и его тестового запуска
+    needs: test # Запускается только после успешного выполнения задания 'test'
     runs-on: ubuntu-latest
     steps:
+      # 1. Получаем код из репозитория
       - uses: actions/checkout@v3
 
+      # 2. Настраиваем Docker Buildx для сборки образов
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      # 3. Логинимся в Docker Hub для последующей отправки образа
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # Используйте токен доступа Docker Hub
 
+      # 4. Собираем Docker образ, но пока не отправляем (push: false)
+      # load: true загружает образ в локальный Docker демон раннера для теста
       - name: Build Docker image
+        id: build_image # Даем ID шагу, чтобы ссылаться на тег образа
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -78,20 +102,27 @@ jobs:
           load: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
+          # Опционально: добавляем тег 'latest' для dev ветки
+          # tags: |
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
+      # 5. Запускаем тест контейнера (ваш существующий скрипт)
       - name: Test Docker container
+        id: test_container # Даем ID шагу для проверки его статуса
         run: |
           #!/bin/bash
-          set -e # Exit immediately if a command exits with a non-zero status.
+          set -e # Выход при первой ошибке
 
           CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID}"
+          # Используем тег, сгенерированный шагом сборки (хотя он и так известен через env.VERSION)
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}"
           ENV_FILE=".env.test"
-          # SUCCESS_PATTERN="Парсинг завершен" # Using exact match below
-          TIMEOUT_SECONDS=180 # 3 minutes timeout
-          CHECK_INTERVAL=10
+          SUCCESS_PATTERN="Парсинг завершен"
+          TIMEOUT_SECONDS=180 # Таймаут 3 минуты
+          CHECK_INTERVAL=10 # Интервал проверки логов
 
-          # Create .env file for the test container
+          # Создаем .env файл для тестового контейнера
           echo "Creating $ENV_FILE..."
           echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
           echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> $ENV_FILE
@@ -107,11 +138,12 @@ jobs:
           echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> $ENV_FILE
           echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
           echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
-          echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE # Use correct secret name
+          # Исправлено имя переменной секрета на KEYS_BLACK_AVITO
+          echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
           echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
           echo "$ENV_FILE created."
 
-          # Cleanup function to stop/remove container and delete env file
+          # Функция очистки для остановки/удаления контейнера и файла .env
           cleanup() {
             echo "Cleaning up test container $CONTAINER_NAME..."
             docker stop $CONTAINER_NAME || echo "Container $CONTAINER_NAME was not running."
@@ -119,74 +151,102 @@ jobs:
             rm -f $ENV_FILE
             echo "Cleanup finished."
           }
-          # Register the cleanup function to run on script exit (success or failure)
+          # Регистрируем cleanup для выполнения при выходе из скрипта (успешном или нет)
           trap cleanup EXIT
 
-          # Run the container in detached mode
+          # Запускаем контейнер в фоновом режиме (-d)
           echo "Starting container $CONTAINER_NAME from image $IMAGE_TAG..."
           docker run -d --name $CONTAINER_NAME --env-file $ENV_FILE $IMAGE_TAG
 
-          # Wait for the container to produce the success log or timeout/crash
-          echo "Waiting up to $TIMEOUT_SECONDS seconds for container to produce 'Парсинг завершен' in logs..."
+          # Ждем появления сообщения об успехе в логах или таймаута/падения контейнера
+          echo "Waiting up to $TIMEOUT_SECONDS seconds for container to produce '$SUCCESS_PATTERN' in logs..."
           SECONDS=0
           SUCCESS=false
           while [ $SECONDS -lt $TIMEOUT_SECONDS ]; do
-            # Check if container is still running
+            # Проверяем, работает ли еще контейнер
             if ! docker ps -q -f name=^/${CONTAINER_NAME}$; then
               echo "Error: Container $CONTAINER_NAME stopped unexpectedly."
               echo "--- Container Logs ---"
               docker logs $CONTAINER_NAME || echo "Could not retrieve logs for stopped container."
               echo "----------------------"
-              exit 1 # Exit with failure
+              exit 1 # Выход с ошибкой
             fi
 
-            # Check logs for the success pattern
-            # Using grep -F for fixed string matching, -q for quiet mode
-            if docker logs $CONTAINER_NAME 2>&1 | grep -q -F "Парсинг завершен"; then
-              echo "Success: Found 'Парсинг завершен' in logs."
+            # Проверяем логи на наличие паттерна успеха
+            # grep -F ищет точную строку, -q подавляет вывод
+            if docker logs $CONTAINER_NAME 2>&1 | grep -q -F "$SUCCESS_PATTERN"; then
+              echo "Success: Found '$SUCCESS_PATTERN' in logs."
               echo "--- Container Logs (Last 20 lines) ---"
               docker logs $CONTAINER_NAME | tail -n 20
               echo "--------------------------------------"
               SUCCESS=true
-              break # Exit the loop on success
+              break # Выход из цикла при успехе
             fi
 
             sleep $CHECK_INTERVAL
             SECONDS=$((SECONDS + CHECK_INTERVAL))
-            echo "Still waiting... ($SECONDS/$TIMEOUT_SECONDS seconds)"
+            # Исправлено отображение текущего времени ожидания
+            echo "Still waiting... (${SECONDS}/${TIMEOUT_SECONDS} seconds)"
           done
 
-          # Check if the loop exited due to success or timeout
+          # Проверяем, вышли ли из цикла по успеху или по таймауту
           if [ "$SUCCESS" = false ]; then
-            echo "Error: Timeout ($TIMEOUT_SECONDS seconds) reached waiting for 'Парсинг завершен'."
+            echo "Error: Timeout ($TIMEOUT_SECONDS seconds) reached waiting for '$SUCCESS_PATTERN'."
             echo "--- Container Logs ---"
             docker logs $CONTAINER_NAME || echo "Could not retrieve logs for running container."
             echo "----------------------"
-            exit 1 # Exit with failure
+            exit 1 # Выход с ошибкой
           fi
 
-          # If success, trap will handle cleanup. Exit 0 explicitly.
+          # Если успешно, cleanup выполнится через trap. Выходим с кодом 0.
           exit 0
 
+      # 6. Отправляем (push) Docker образ в Docker Hub ТОЛЬКО если тест контейнера прошел успешно
       - name: Push Docker image
+        # Условие: выполняется только если предыдущий шаг (test_container) завершился успешно
         if: success()
         uses: docker/build-push-action@v4
         with:
+          # Контекст и Dockerfile указывать не нужно, т.к. мы пушим уже собранный образ
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
+          # Опционально: добавляем тег 'latest' для dev ветки
+          # tags: |
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}
+          #   ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
+  deploy:
+    # Задание для деплоя приложения на сервер
+    needs: build-and-test-container # Запускается только после успеха 'build-and-test-container'
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout нужен для использования actions, например, ssh-key-action
+      - uses: actions/checkout@v3
+
+      # 2. Устанавливаем SSH ключ для доступа к серверу
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: 'just-a-placeholder-so-we-dont-get-errors' # Replace with actual known_hosts if needed
+          # Добавляем хост сервера в known_hosts, чтобы избежать интерактивного запроса
+          # Замените <your_server_ip_or_domain> на IP или домен вашего сервера
+          # known_hosts: |
+          #   <your_server_ip_or_domain> ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ...
+          # Вместо явного ключа можно использовать placeholder, если StrictHostKeyChecking=no
+          known_hosts: 'placeholder' # Достаточно для StrictHostKeyChecking=no
 
+      # 3. Выполняем команды на удаленном сервере для деплоя
       - name: Deploy to server
         run: |
+          # Команда SSH для подключения к серверу и выполнения команд деплоя
+          # Используем StrictHostKeyChecking=no, т.к. known_hosts у нас placeholder
+          # Замените <your_server_ip_or_domain> на IP или домен вашего сервера
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            # Создаем директорию для приложения, если ее нет
             mkdir -p ${{ secrets.APP_LOCATION }} && \
             cd ${{ secrets.APP_LOCATION }} && \
+            # Создаем .env файл на сервере со всеми секретами
             echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > .env && \
             echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> .env && \
             echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> .env && \
@@ -203,15 +263,23 @@ jobs:
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
             echo 'KEYS_BLACK=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
-            echo 'version: \"3\"' > docker-compose.yml && \
+            # Создаем docker-compose.yml на сервере
+            echo 'version: \"3.8\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
             echo '  avito-parser:' >> docker-compose.yml && \
             echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.VERSION }}' >> docker-compose.yml && \
             echo '    container_name: avito-parser' >> docker-compose.yml && \
             echo '    restart: unless-stopped' >> docker-compose.yml && \
             echo '    env_file: .env' >> docker-compose.yml && \
+            # Логинимся в Docker Hub на сервере (если образ приватный)
+            # echo '${{ secrets.DOCKERHUB_TOKEN }}' | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin && \
+            # Обновляем образ из Docker Hub
             docker compose pull && \
-            docker compose down && \
+            # Останавливаем и удаляем старый контейнер (если запущен)
+            docker compose down || true && \
+            # Запускаем новый контейнер в фоновом режиме
             docker compose up -d && \
-            docker logs avito-parser
+            # Показываем логи нового контейнера для проверки
+            echo '--- Deployment logs ---' && \
+            docker logs avito-parser --tail 50
           "
