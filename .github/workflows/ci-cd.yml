@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ dev ] # Убедитесь, что это правильная ветка
+    branches: [ dev ] 
   pull_request:
-    branches: [ dev ] # Убедитесь, что это правильная ветка
+    branches: [ dev ] 
 
 env:
   # Имя вашего образа Docker
@@ -61,16 +61,6 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/ --cov=./ --cov-report=xml
-
-      # Опционально: Загрузка отчета о покрытии (если используете Codecov и т.п.)
-      # - name: Upload coverage to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }} # Добавьте секрет CODECOV_TOKEN
-      #     file: ./coverage.xml
-      #     flags: unittests
-      #     name: codecov-umbrella
-      #     fail_ci_if_error: true
 
   build-and-test-container:
     # Задание для сборки Docker-образа и его тестового запуска
@@ -229,11 +219,6 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Добавляем хост сервера в known_hosts, чтобы избежать интерактивного запроса
-          # Замените <your_server_ip_or_domain> на IP или домен вашего сервера
-          # known_hosts: |
-          #   <your_server_ip_or_domain> ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ...
-          # Вместо явного ключа можно использовать placeholder, если StrictHostKeyChecking=no
           known_hosts: 'placeholder' # Достаточно для StrictHostKeyChecking=no
 
       # 3. Выполняем команды на удаленном сервере для деплоя
