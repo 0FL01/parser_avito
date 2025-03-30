@@ -226,7 +226,7 @@ jobs:
             echo 'version: \"3.8\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
             echo '  avito-parser:' >> docker-compose.yml && \
-            echo '    image: ${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}' >> docker-compose.yml && \
+            echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build-and-test-container.outputs.sha_short }}' >> docker-compose.yml && \
             echo '    container_name: avito-parser' >> docker-compose.yml && \
             echo '    restart: unless-stopped' >> docker-compose.yml && \
             echo '    env_file: .env' >> docker-compose.yml && \
