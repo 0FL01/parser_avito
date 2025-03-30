@@ -95,7 +95,7 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.sha_short }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
 
       - name: Test Docker container
         id: test_container
@@ -104,7 +104,7 @@ jobs:
           set -e
 
           CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID}"
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.sha_short }}"
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
           ENV_FILE=".env.test"
           SUCCESS_PATTERN="Парсинг завершен"
           TIMEOUT_SECONDS=200
@@ -183,7 +183,7 @@ jobs:
         with:
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.sha_short }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
 
   deploy:
     needs: build-and-test-container
