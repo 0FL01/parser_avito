@@ -223,6 +223,7 @@ jobs:
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
             echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
+            echo 'version: \"3.8\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
             echo '  avito-parser:' >> docker-compose.yml && \
             echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build-and-test-container.outputs.sha_short }}' >> docker-compose.yml && \
