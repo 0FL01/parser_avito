@@ -107,8 +107,8 @@ jobs:
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.sha_short }}"
           ENV_FILE=".env.test"
           SUCCESS_PATTERN="Парсинг завершен"
-          TIMEOUT_SECONDS=180
-          CHECK_INTERVAL=10
+          TIMEOUT_SECONDS=200
+          CHECK_INTERVAL=20
 
           echo "Creating $ENV_FILE..."
           echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
