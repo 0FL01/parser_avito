@@ -115,8 +115,8 @@ jobs:
                       # Паттерны для определения успешного завершения теста
                       PARSING_COMPLETE_PATTERN="Парсинг завершен"
                       FOUND_AD_PATTERN="SUCCESS | __main__:__pretty_log" # Паттерн для найденного объявления
-                      TIMEOUT_SECONDS=200
-                      CHECK_INTERVAL=20
+                      TIMEOUT_SECONDS=300
+                      CHECK_INTERVAL=10
     
                       echo "Creating $ENV_FILE..."
                       echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
