@@ -233,6 +233,7 @@ jobs:
             docker compose pull && \
             docker compose down || true && \
             docker compose up -d && \
+            docker image prune -af && \
             echo '--- Deployment logs ---' && \
             docker logs avito-parser --tail 50
           "
