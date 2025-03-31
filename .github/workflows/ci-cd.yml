@@ -234,7 +234,5 @@ jobs:
             docker compose down || true && \
             docker compose up -d && \
             echo '--- Deployment logs ---' && \
-            docker logs avito-parser --tail 50 && \
-            echo '--- Cleaning up Docker images ---' && \
-            docker image prune -af
+            docker logs avito-parser --tail 50
           "
