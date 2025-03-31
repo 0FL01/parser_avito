@@ -263,20 +263,18 @@ jobs:
                   known_hosts: |
                     ${{ secrets.SSH_HOST_BASE }}
 
-                    - name: Deploy to base server using Docker Compose
-                    env:
+              - name: Deploy to base server using Docker Compose
+                env:
                       SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
                       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
                       DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
-                    run: |
+                run: |
                       FULL_IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}"
                       CONTAINER_NAME="avito-parser-base"
                       APP_LOCATION="${{ secrets.APP_LOCATION_BASE }}"
                       SSH_TARGET="${{ secrets.SSH_USERNAME_BASE }}@${{ secrets.SSH_HOST_BASE }}"
                       SSH_PORT="${{ secrets.SSH_PORT_BASE }}"
-            
                       echo "Deploying image $FULL_IMAGE_NAME to $SSH_TARGET:$APP_LOCATION"
-            
                       ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_TARGET "
                         mkdir -p $APP_LOCATION && \
                         cd $APP_LOCATION && \
