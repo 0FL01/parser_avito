@@ -255,13 +255,13 @@ jobs:
             environment: base
             steps:
               - uses: actions/checkout@v3
-        
+
               - name: Install SSH key
                 uses: shimataro/ssh-key-action@v2
                 with:
                   key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
                   known_hosts: |
-                    ${{ secrets.SSH_HOST_BASE }} 
+                    ${{ secrets.SSH_HOST_BASE }} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOQ1zNuMZGxbOIiz16Me0ndMRrWJmuXNp54MizhjhnLi
 
               - name: Deploy to base server using Docker commands
                 env:
