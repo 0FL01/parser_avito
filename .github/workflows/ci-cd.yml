@@ -277,7 +277,7 @@ jobs:
         
                   echo "Deploying image $FULL_IMAGE_NAME to $SSH_TARGET:$APP_LOCATION"
         
-                  ssh -o StrictHostKeyChecking=yes -p $SSH_PORT $SSH_TARGET "
+                  ssh -o StrictHostKeyChecking=no -p $SSH_PORT $SSH_TARGET "
                     mkdir -p $APP_LOCATION && \
                     cd $APP_LOCATION && \
                     echo '--- Creating .env file ---' && \
