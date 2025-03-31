@@ -313,5 +313,5 @@ jobs:
                         echo '--- Cleaning up old images ---' && \
                         docker image prune -af && \
                         echo '--- Deployment logs (base) ---' && \
-                        docker сompose logs --tail 50
+                        docker compose logs --tail 50
                       "
