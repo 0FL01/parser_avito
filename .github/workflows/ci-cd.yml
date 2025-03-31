@@ -249,58 +249,68 @@ jobs:
           "
 
   deploy-base:
-    needs: build-and-test-container
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'base')
-    runs-on: ubuntu-latest
-    environment: base 
-    steps:
-      - uses: actions/checkout@v3
+            needs: build-and-test-container
+            if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'base')
+            runs-on: ubuntu-latest
+            environment: base
+            steps:
+              - uses: actions/checkout@v3
+        
+              - name: Install SSH key
+                uses: shimataro/ssh-key-action@v2
+                with:
+                  key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
+                  known_hosts: |
+                    ${{ secrets.SSH_HOST_BASE }} 
 
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
-          known_hosts: 'placeholder'
-
-      - name: Deploy to base server
-        env:
-          SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
-        run: |
-          # Убедитесь, что используете правильные секреты для base окружения
-          echo "Using image tag: $DOCKERHUB_USERNAME/$DOCKER_IMAGE_NAME:$SHORT_SHA"
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT_BASE }} ${{ secrets.SSH_USERNAME_BASE }}@${{ secrets.SSH_HOST_BASE }} "
-            mkdir -p ${{ secrets.APP_LOCATION_BASE }} && \
-            cd ${{ secrets.APP_LOCATION_BASE }} && \
-            # Используйте секреты, специфичные для base, если они отличаются
-            echo 'URL_AVITO=${{ secrets.URL_AVITO_BASE }}' > .env && \
-            echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG_BASE }}' >> .env && \
-            echo 'TG_TOKEN=${{ secrets.TG_TOKEN_BASE }}' >> .env && \
-            echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO_BASE }}' >> .env && \
-            echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO_BASE }}' >> .env && \
-            echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO_BASE }}' >> .env && \
-            echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO_BASE }}' >> .env && \
-            echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO_BASE }}' >> .env && \
-            echo 'GEO_AVITO=${{ secrets.GEO_AVITO_BASE }}' >> .env && \
-            echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO_BASE }}' >> .env && \
-            echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO_BASE }}' >> .env && \
-            echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO_BASE }}' >> .env && \
-            echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO_BASE }}' >> .env && \
-            echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO_BASE }}' >> .env && \
-            echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO_BASE }}' >> .env && \
-            echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO_BASE }}' >> .env && \
-            echo 'version: \"3.8\"' > docker-compose.yml && \
-            echo 'services:' >> docker-compose.yml && \
-            echo '  avito-parser:' >> docker-compose.yml && \
-            echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${SHORT_SHA}' >> docker-compose.yml && \
-            echo '    container_name: avito-parser-base' >> docker-compose.yml && \
-            echo '    restart: unless-stopped' >> docker-compose.yml && \
-            echo '    env_file: .env' >> docker-compose.yml && \
-            docker compose pull && \
-            docker compose down || true && \
-            docker compose up -d && \
-            docker image prune -af && \
-            echo '--- Deployment logs (base) ---' && \
-            docker logs avito-parser-base --tail 50
-          "
+              - name: Deploy to base server using Docker commands
+                env:
+                  SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
+                  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+                  DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
+                run: |
+                  FULL_IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}"
+                  CONTAINER_NAME="avito-parser-base"
+                  APP_LOCATION="${{ secrets.APP_LOCATION_BASE }}"
+                  SSH_TARGET="${{ secrets.SSH_USERNAME_BASE }}@${{ secrets.SSH_HOST_BASE }}"
+                  SSH_PORT="${{ secrets.SSH_PORT_BASE }}"
+        
+                  echo "Deploying image $FULL_IMAGE_NAME to $SSH_TARGET:$APP_LOCATION"
+        
+                  ssh -o StrictHostKeyChecking=yes -p $SSH_PORT $SSH_TARGET "
+                    mkdir -p $APP_LOCATION && \
+                    cd $APP_LOCATION && \
+                    echo '--- Creating .env file ---' && \
+                    echo 'URL_AVITO=${{ secrets.URL_AVITO_BASE }}' > .env && \
+                    echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG_BASE }}' >> .env && \
+                    echo 'TG_TOKEN=${{ secrets.TG_TOKEN_BASE }}' >> .env && \
+                    echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO_BASE }}' >> .env && \
+                    echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO_BASE }}' >> .env && \
+                    echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO_BASE }}' >> .env && \
+                    echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO_BASE }}' >> .env && \
+                    echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO_BASE }}' >> .env && \
+                    echo 'GEO_AVITO=${{ secrets.GEO_AVITO_BASE }}' >> .env && \
+                    echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO_BASE }}' >> .env && \
+                    echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO_BASE }}' >> .env && \
+                    echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO_BASE }}' >> .env && \
+                    echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO_BASE }}' >> .env && \
+                    echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO_BASE }}' >> .env && \
+                    echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO_BASE }}' >> .env && \
+                    echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO_BASE }}' >> .env && \
+                    echo '--- Pulling new image ---' && \
+                    docker pull $FULL_IMAGE_NAME && \
+                    echo '--- Stopping existing container (if any) ---' && \
+                    docker stop $CONTAINER_NAME || true && \
+                    echo '--- Removing existing container (if any) ---' && \
+                    docker rm $CONTAINER_NAME || true && \
+                    echo '--- Starting new container ---' && \
+                    docker run -d \
+                      --name $CONTAINER_NAME \
+                      --restart unless-stopped \
+                      --env-file .env \
+                      $FULL_IMAGE_NAME && \
+                    echo '--- Cleaning up old images ---' && \
+                    docker image prune -af && \
+                    echo '--- Deployment logs (base) ---' && \
+                    docker logs $CONTAINER_NAME --tail 50
+                  "
