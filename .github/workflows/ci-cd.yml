@@ -5,14 +5,12 @@ on:
     branches: [ dev ]
   pull_request:
     branches: [ dev ]
-
-
   workflow_dispatch:
-      inputs:
-        environment:
-          description: 'Environment to deploy to'
-          required: true
-          type: environment
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: environment
 
 env:
   DOCKER_IMAGE_NAME: avito-parser
@@ -103,38 +101,54 @@ jobs:
           push: false
           load: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
 
       - name: Test Docker container
         id: test_container
+        env:
+          URL_AVITO: ${{ secrets.URL_AVITO }}
+          CHAT_ID_TG: ${{ secrets.CHAT_ID_TG }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          NUM_ADS_AVITO: ${{ secrets.NUM_ADS_AVITO }}
+          FREQ_AVITO: ${{ secrets.FREQ_AVITO }}
+          KEYS_AVITO: ${{ secrets.KEYS_AVITO }}
+          MAX_PRICE_AVITO: ${{ secrets.MAX_PRICE_AVITO }}
+          MIN_PRICE_AVITO: ${{ secrets.MIN_PRICE_AVITO }}
+          GEO_AVITO: ${{ secrets.GEO_AVITO }}
+          PROXY_AVITO: ${{ secrets.PROXY_AVITO }}
+          PROXY_CHANGE_IP_AVITO: ${{ secrets.PROXY_CHANGE_IP_AVITO }}
+          NEED_MORE_INFO_AVITO: ${{ secrets.NEED_MORE_INFO_AVITO }}
+          DEBUG_MODE_AVITO: ${{ secrets.DEBUG_MODE_AVITO }}
+          FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
+          KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
+          MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
         run: |
           #!/bin/bash
           set -e
-
           CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID}"
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
+          IMAGE_TAG="${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build-and-test-container.outputs.sha_short }}"
           ENV_FILE=".env.test"
           SUCCESS_PATTERN="Парсинг завершен"
           TIMEOUT_SECONDS=200
           CHECK_INTERVAL=20
 
           echo "Creating $ENV_FILE..."
-          echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
-          echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> $ENV_FILE
-          echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> $ENV_FILE
-          echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO }}' >> $ENV_FILE
-          echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO }}' >> $ENV_FILE
-          echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO }}' >> $ENV_FILE
-          echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO }}' >> $ENV_FILE
-          echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO }}' >> $ENV_FILE
-          echo 'GEO_AVITO=${{ secrets.GEO_AVITO }}' >> $ENV_FILE
-          echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO }}' >> $ENV_FILE
-          echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO }}' >> $ENV_FILE
-          echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> $ENV_FILE
-          echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
-          echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
-          echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
-          echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
+          echo "URL_AVITO=${URL_AVITO}" > $ENV_FILE
+          echo "CHAT_ID_TG=${CHAT_ID_TG}" >> $ENV_FILE
+          echo "TG_TOKEN=${TG_TOKEN}" >> $ENV_FILE
+          echo "NUM_ADS_AVITO=${NUM_ADS_AVITO}" >> $ENV_FILE
+          echo "FREQ_AVITO=${FREQ_AVITO}" >> $ENV_FILE
+          echo "KEYS_AVITO=${KEYS_AVITO}" >> $ENV_FILE
+          echo "MAX_PRICE_AVITO=${MAX_PRICE_AVITO}" >> $ENV_FILE
+          echo "MIN_PRICE_AVITO=${MIN_PRICE_AVITO}" >> $ENV_FILE
+          echo "GEO_AVITO=${GEO_AVITO}" >> $ENV_FILE
+          echo "PROXY_AVITO=${PROXY_AVITO}" >> $ENV_FILE
+          echo "PROXY_CHANGE_IP_AVITO=${PROXY_CHANGE_IP_AVITO}" >> $ENV_FILE
+          echo "NEED_MORE_INFO_AVITO=${NEED_MORE_INFO_AVITO}" >> $ENV_FILE
+          echo "DEBUG_MODE_AVITO=${DEBUG_MODE_AVITO}" >> $ENV_FILE
+          echo "FAST_SPEED_AVITO=${FAST_SPEED_AVITO}" >> $ENV_FILE
+          echo "KEYS_BLACK_AVITO=${KEYS_BLACK_AVITO}" >> $ENV_FILE
+          echo "MAX_VIEW_AVITO=${MAX_VIEW_AVITO}" >> $ENV_FILE
           echo "$ENV_FILE created."
 
           cleanup() {
@@ -182,21 +196,22 @@ jobs:
             echo "----------------------"
             exit 1
           fi
-
           exit 0
 
       - name: Push Docker image
         if: success()
         uses: docker/build-push-action@v4
         with:
+          context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
 
   deploy:
     needs: build-and-test-container
     runs-on: ubuntu-latest
-    environment: dev
+    if: github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - uses: actions/checkout@v3
 
@@ -204,17 +219,19 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: 'placeholder'
+          known_hosts: ${{ secrets.SSH_HOST }}
 
       - name: Deploy to server
         env:
           SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_USERNAME: ${{ env.DOCKERHUB_USERNAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         run: |
+          echo "Deploying SHA ${{ env.SHORT_SHA }} to ${{ secrets.SSH_HOST }} (Environment: ${{ github.event.inputs.environment }})"
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
             mkdir -p ${{ secrets.APP_LOCATION }} && \
             cd ${{ secrets.APP_LOCATION }} && \
+            echo '--- Creating .env file for environment ${{ github.event.inputs.environment }} ---' && \
             echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > .env && \
             echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> .env && \
             echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> .env && \
@@ -231,16 +248,23 @@ jobs:
             echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> .env && \
             echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> .env && \
             echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> .env && \
+            echo '.env file created.' && \
+            echo '--- Creating docker-compose.yml ---' && \
             echo 'version: \"3.8\"' > docker-compose.yml && \
             echo 'services:' >> docker-compose.yml && \
             echo '  avito-parser:' >> docker-compose.yml && \
-            echo '    image: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ needs.build-and-test-container.outputs.sha_short }}' >> docker-compose.yml && \
+            echo '    image: ${{ env.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ env.SHORT_SHA }}' >> docker-compose.yml && \
             echo '    container_name: avito-parser' >> docker-compose.yml && \
             echo '    restart: unless-stopped' >> docker-compose.yml && \
             echo '    env_file: .env' >> docker-compose.yml && \
+            echo 'docker-compose.yml created.' && \
+            echo '--- Pulling new image ---' && \
             docker compose pull && \
-            docker compose down || true && \
+            echo '--- Stopping and removing old container (if exists) ---' && \
+            docker compose down --remove-orphans || true && \
+            echo '--- Starting new container ---' && \
             docker compose up -d && \
+            echo '--- Pruning old images ---' && \
             docker image prune -af && \
             echo '--- Deployment logs ---' && \
             docker logs avito-parser --tail 50
