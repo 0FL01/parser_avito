@@ -170,7 +170,8 @@ jobs:
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: 'temporary' # Заменено на шаг ниже
+          known_hosts: 'temporary'
+          if_key_exists: replace
 
       - name: Add server key to known_hosts
         run: |
@@ -294,6 +295,7 @@ jobs:
                 with:
                   key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
                   known_hosts: 'temporary'
+                  if_key_exists: replace
 
               - name: Add server key to known_hosts
                 run: |
