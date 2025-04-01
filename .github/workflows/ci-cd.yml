@@ -85,8 +85,13 @@ jobs:
               - name: Set short SHA
                 id: vars
                 run: |
-                  echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-                  echo "Short SHA: $(git rev-parse --short HEAD)"
+                  GIT_SHA=$(git rev-parse --short HEAD)
+                  if [ -z "$GIT_SHA" ]; then
+                    echo "Error: git rev-parse --short HEAD returned empty string!"
+                    exit 1
+                  fi
+                  echo "sha_short=${GIT_SHA}" >> $GITHUB_OUTPUT
+                  echo "Short SHA: ${GIT_SHA}"
 
               - name: Set up Docker Buildx
                 uses: docker/setup-buildx-action@v2
@@ -186,8 +191,9 @@ jobs:
               - name: Push Docker image
                 if: success()
                 run: |
-                  echo "Pushing image ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}..."
-                  docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+                  IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
+                  echo "Pushing image ${IMAGE_TAG}..."
+                  docker push ${IMAGE_TAG}
 
   deploy-dev:
     needs: build-and-test-container
@@ -229,14 +235,14 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         run: |
-          FULL_IMAGE_NAME="${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}"
-          CONTAINER_NAME="avito-parser"
-          SSH_TARGET="${SSH_USERNAME}@${SSH_HOST}"
-
           if [ -z "$SHORT_SHA" ]; then
             echo "Error: SHORT_SHA is empty. Cannot proceed with deployment."
             exit 1
           fi
+
+          FULL_IMAGE_NAME="${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}"
+          CONTAINER_NAME="avito-parser"
+          SSH_TARGET="${SSH_USERNAME}@${SSH_HOST}"
 
           echo "Deploying image $FULL_IMAGE_NAME to $SSH_TARGET:$APP_LOCATION"
 
@@ -304,7 +310,7 @@ jobs:
                 uses: shimataro/ssh-key-action@v2
                 with:
                   key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
-                  known_hosts: 'placeholder' # Rely on StrictHostKeyChecking=no
+                  known_hosts: 'placeholder'
 
               - name: Deploy to base server using Docker Compose
                 env:
@@ -332,16 +338,16 @@ jobs:
                   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
                   DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
                 run: |
+                      if [ -z "$SHORT_SHA" ]; then
+                        echo "Error: SHORT_SHA is empty. Cannot proceed with deployment."
+                        exit 1
+                      fi
+
                       FULL_IMAGE_NAME="${DOCKERHUB_USERNAME}/${DOCKER_IMAGE_NAME}:${SHORT_SHA}"
                       CONTAINER_NAME="avito-parser-base"
                       APP_LOCATION="$APP_LOCATION_BASE"
                       SSH_TARGET="${SSH_USERNAME_BASE}@${SSH_HOST_BASE}"
                       SSH_PORT="$SSH_PORT_BASE"
-
-                      if [ -z "$SHORT_SHA" ]; then
-                        echo "Error: SHORT_SHA is empty. Cannot proceed with deployment."
-                        exit 1
-                      fi
 
                       echo "Deploying image $FULL_IMAGE_NAME to $SSH_TARGET:$APP_LOCATION"
 
