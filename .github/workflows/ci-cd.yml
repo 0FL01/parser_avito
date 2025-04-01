@@ -76,13 +76,13 @@ jobs:
             needs: test
             runs-on: ubuntu-latest
             outputs:
-              sha_short: ${{ steps.vars.outputs.sha_short }}
+              sha_short: ${{ steps.vars.outputs.sha_short }} # Оставляем для возможной отладки
             steps:
               - uses: actions/checkout@v3
                 with:
                   fetch-depth: 0
 
-              - name: Set short SHA
+              - name: Set short SHA and create artifact file
                 id: vars
                 run: |
                   GIT_SHA=$(git rev-parse --short HEAD)
@@ -91,7 +91,15 @@ jobs:
                     exit 1
                   fi
                   echo "sha_short=${GIT_SHA}" >> $GITHUB_OUTPUT
+                  echo "${GIT_SHA}" > sha.txt # Запись SHA в файл
                   echo "Short SHA: ${GIT_SHA}"
+
+              - name: Upload SHA artifact
+                uses: actions/upload-artifact@v4
+                with:
+                  name: sha-artifact # Имя артефакта
+                  path: sha.txt      # Путь к файлу для загрузки
+                  if-no-files-found: error
 
               - name: Set up Docker Buildx
                 uses: docker/setup-buildx-action@v2
@@ -111,13 +119,32 @@ jobs:
                   load: true
                   tags: |
                     ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+
               - name: Test Docker container
                 id: test_container
+                env: # Передаем SHA и секреты как переменные окружения шага
+                   IMAGE_TAG: "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
+                   URL_AVITO: ${{ secrets.URL_AVITO }}
+                   CHAT_ID_TG: ${{ secrets.CHAT_ID_TG }}
+                   TG_TOKEN: ${{ secrets.TG_TOKEN }}
+                   NUM_ADS_AVITO: ${{ secrets.NUM_ADS_AVITO }}
+                   FREQ_AVITO: ${{ secrets.FREQ_AVITO }}
+                   KEYS_AVITO: ${{ secrets.KEYS_AVITO }}
+                   MAX_PRICE_AVITO: ${{ secrets.MAX_PRICE_AVITO }}
+                   MIN_PRICE_AVITO: ${{ secrets.MIN_PRICE_AVITO }}
+                   GEO_AVITO: ${{ secrets.GEO_AVITO }}
+                   PROXY_AVITO: ${{ secrets.PROXY_AVITO }}
+                   PROXY_CHANGE_IP_AVITO: ${{ secrets.PROXY_CHANGE_IP_AVITO }}
+                   NEED_MORE_INFO_AVITO: ${{ secrets.NEED_MORE_INFO_AVITO }}
+                   DEBUG_MODE_AVITO: ${{ secrets.DEBUG_MODE_AVITO }}
+                   FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
+                   KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
+                   MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
                 run: |
                       #!/bin/bash
                       set -e
                       CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID}"
-                      IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
+                      # IMAGE_TAG теперь переменная окружения шага
                       ENV_FILE=".env.test"
                       PARSING_COMPLETE_PATTERN="Парсинг завершен"
                       FOUND_AD_PATTERN="SUCCESS | __main__:__pretty_log"
@@ -125,22 +152,23 @@ jobs:
                       CHECK_INTERVAL=10
 
                       echo "Creating $ENV_FILE..."
-                      echo 'URL_AVITO=${{ secrets.URL_AVITO }}' > $ENV_FILE
-                      echo 'CHAT_ID_TG=${{ secrets.CHAT_ID_TG }}' >> $ENV_FILE
-                      echo 'TG_TOKEN=${{ secrets.TG_TOKEN }}' >> $ENV_FILE
-                      echo 'NUM_ADS_AVITO=${{ secrets.NUM_ADS_AVITO }}' >> $ENV_FILE
-                      echo 'FREQ_AVITO=${{ secrets.FREQ_AVITO }}' >> $ENV_FILE
-                      echo 'KEYS_AVITO=${{ secrets.KEYS_AVITO }}' >> $ENV_FILE
-                      echo 'MAX_PRICE_AVITO=${{ secrets.MAX_PRICE_AVITO }}' >> $ENV_FILE
-                      echo 'MIN_PRICE_AVITO=${{ secrets.MIN_PRICE_AVITO }}' >> $ENV_FILE
-                      echo 'GEO_AVITO=${{ secrets.GEO_AVITO }}' >> $ENV_FILE
-                      echo 'PROXY_AVITO=${{ secrets.PROXY_AVITO }}' >> $ENV_FILE
-                      echo 'PROXY_CHANGE_IP_AVITO=${{ secrets.PROXY_CHANGE_IP_AVITO }}' >> $ENV_FILE
-                      echo 'NEED_MORE_INFO_AVITO=${{ secrets.NEED_MORE_INFO_AVITO }}' >> $ENV_FILE
-                      echo 'DEBUG_MODE_AVITO=${{ secrets.DEBUG_MODE_AVITO }}' >> $ENV_FILE
-                      echo 'FAST_SPEED_AVITO=${{ secrets.FAST_SPEED_AVITO }}' >> $ENV_FILE
-                      echo 'KEYS_BLACK_AVITO=${{ secrets.KEYS_BLACK_AVITO }}' >> $ENV_FILE
-                      echo 'MAX_VIEW_AVITO=${{ secrets.MAX_VIEW_AVITO }}' >> $ENV_FILE
+                      # Используем переменные окружения шага
+                      echo "URL_AVITO=$URL_AVITO" > $ENV_FILE
+                      echo "CHAT_ID_TG=$CHAT_ID_TG" >> $ENV_FILE
+                      echo "TG_TOKEN=$TG_TOKEN" >> $ENV_FILE
+                      echo "NUM_ADS_AVITO=$NUM_ADS_AVITO" >> $ENV_FILE
+                      echo "FREQ_AVITO=$FREQ_AVITO" >> $ENV_FILE
+                      echo "KEYS_AVITO=$KEYS_AVITO" >> $ENV_FILE
+                      echo "MAX_PRICE_AVITO=$MAX_PRICE_AVITO" >> $ENV_FILE
+                      echo "MIN_PRICE_AVITO=$MIN_PRICE_AVITO" >> $ENV_FILE
+                      echo "GEO_AVITO=$GEO_AVITO" >> $ENV_FILE
+                      echo "PROXY_AVITO=$PROXY_AVITO" >> $ENV_FILE
+                      echo "PROXY_CHANGE_IP_AVITO=$PROXY_CHANGE_IP_AVITO" >> $ENV_FILE
+                      echo "NEED_MORE_INFO_AVITO=$NEED_MORE_INFO_AVITO" >> $ENV_FILE
+                      echo "DEBUG_MODE_AVITO=$DEBUG_MODE_AVITO" >> $ENV_FILE
+                      echo "FAST_SPEED_AVITO=$FAST_SPEED_AVITO" >> $ENV_FILE
+                      echo "KEYS_BLACK_AVITO=$KEYS_BLACK_AVITO" >> $ENV_FILE
+                      echo "MAX_VIEW_AVITO=$MAX_VIEW_AVITO" >> $ENV_FILE
                       echo "$ENV_FILE created."
 
                       cleanup() {
@@ -201,7 +229,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3 # Может не требоваться, если файлы репозитория не используются напрямую
+
+      - name: Download SHA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sha-artifact # Имя артефакта для скачивания
+          path: .           # Скачать в текущую директорию
 
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
@@ -231,16 +265,15 @@ jobs:
           FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
           KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
           MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
-          # SHORT_SHA убран отсюда
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         run: |
-          # Определяем SHORT_SHA прямо здесь, используя контекст needs
-          SHORT_SHA="${{ needs.build-and-test-container.outputs.sha_short }}"
+          # Читаем SHA из файла артефакта
+          SHORT_SHA=$(cat sha.txt)
 
-          # Проверка на пустоту остается
+          # Проверка на пустоту
           if [ -z "$SHORT_SHA" ]; then
-            echo "Error: SHORT_SHA is empty (accessed via needs context). Cannot proceed with deployment."
+            echo "Error: SHORT_SHA is empty (read from artifact file sha.txt). Cannot proceed with deployment."
             exit 1
           fi
 
@@ -300,7 +333,7 @@ jobs:
             echo '--- Deployment logs (dev) ---' && \
             docker compose logs --tail 50
           "
-          rm .env.dev.local docker-compose.dev.local
+          rm .env.dev.local docker-compose.dev.local sha.txt # Удаляем локальные временные файлы
 
   deploy-base:
             needs: build-and-test-container
@@ -308,7 +341,13 @@ jobs:
             runs-on: ubuntu-latest
             environment: base
             steps:
-              - uses: actions/checkout@v3
+              - uses: actions/checkout@v3 # Может не требоваться
+
+              - name: Download SHA artifact
+                uses: actions/download-artifact@v4
+                with:
+                  name: sha-artifact # Имя артефакта для скачивания
+                  path: .           # Скачать в текущую директорию
 
               - name: Install SSH key
                 uses: shimataro/ssh-key-action@v2
@@ -338,16 +377,15 @@ jobs:
                   FAST_SPEED_AVITO_BASE: ${{ secrets.FAST_SPEED_AVITO_BASE }}
                   KEYS_BLACK_AVITO_BASE: ${{ secrets.KEYS_BLACK_AVITO_BASE }}
                   MAX_VIEW_AVITO_BASE: ${{ secrets.MAX_VIEW_AVITO_BASE }}
-                  # SHORT_SHA убран отсюда
                   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
                   DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
                 run: |
-                      # Определяем SHORT_SHA прямо здесь, используя контекст needs
-                      SHORT_SHA="${{ needs.build-and-test-container.outputs.sha_short }}"
+                      # Читаем SHA из файла артефакта
+                      SHORT_SHA=$(cat sha.txt)
 
-                      # Проверка на пустоту остается
+                      # Проверка на пустоту
                       if [ -z "$SHORT_SHA" ]; then
-                        echo "Error: SHORT_SHA is empty (accessed via needs context). Cannot proceed with deployment."
+                        echo "Error: SHORT_SHA is empty (read from artifact file sha.txt). Cannot proceed with deployment."
                         exit 1
                       fi
 
@@ -409,4 +447,4 @@ jobs:
                         echo '--- Deployment logs (base) ---' && \
                         docker compose logs --tail 50
                       "
-                      rm .env.base.local docker-compose.base.local
+                      rm .env.base.local docker-compose.base.local sha.txt # Удаляем локальные временные файлы
