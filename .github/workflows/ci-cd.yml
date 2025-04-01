@@ -231,12 +231,16 @@ jobs:
           FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
           KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
           MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
-          SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
+          # SHORT_SHA убран отсюда
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         run: |
+          # Определяем SHORT_SHA прямо здесь, используя контекст needs
+          SHORT_SHA="${{ needs.build-and-test-container.outputs.sha_short }}"
+
+          # Проверка на пустоту остается
           if [ -z "$SHORT_SHA" ]; then
-            echo "Error: SHORT_SHA is empty. Cannot proceed with deployment."
+            echo "Error: SHORT_SHA is empty (accessed via needs context). Cannot proceed with deployment."
             exit 1
           fi
 
@@ -334,12 +338,16 @@ jobs:
                   FAST_SPEED_AVITO_BASE: ${{ secrets.FAST_SPEED_AVITO_BASE }}
                   KEYS_BLACK_AVITO_BASE: ${{ secrets.KEYS_BLACK_AVITO_BASE }}
                   MAX_VIEW_AVITO_BASE: ${{ secrets.MAX_VIEW_AVITO_BASE }}
-                  SHORT_SHA: ${{ needs.build-and-test-container.outputs.sha_short }}
+                  # SHORT_SHA убран отсюда
                   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
                   DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
                 run: |
+                      # Определяем SHORT_SHA прямо здесь, используя контекст needs
+                      SHORT_SHA="${{ needs.build-and-test-container.outputs.sha_short }}"
+
+                      # Проверка на пустоту остается
                       if [ -z "$SHORT_SHA" ]; then
-                        echo "Error: SHORT_SHA is empty. Cannot proceed with deployment."
+                        echo "Error: SHORT_SHA is empty (accessed via needs context). Cannot proceed with deployment."
                         exit 1
                       fi
 
