@@ -76,7 +76,7 @@ jobs:
             needs: test
             runs-on: ubuntu-latest
             outputs:
-              sha_short: ${{ steps.vars.outputs.sha_short }} # Оставляем для возможной отладки
+              sha_short: ${{ steps.vars.outputs.sha_short }}
             steps:
               - uses: actions/checkout@v3
                 with:
@@ -91,14 +91,14 @@ jobs:
                     exit 1
                   fi
                   echo "sha_short=${GIT_SHA}" >> $GITHUB_OUTPUT
-                  echo "${GIT_SHA}" > sha.txt # Запись SHA в файл
+                  echo "${GIT_SHA}" > sha.txt
                   echo "Short SHA: ${GIT_SHA}"
 
               - name: Upload SHA artifact
                 uses: actions/upload-artifact@v4
                 with:
-                  name: sha-artifact # Имя артефакта
-                  path: sha.txt      # Путь к файлу для загрузки
+                  name: sha-artifact
+                  path: sha.txt
                   if-no-files-found: error
 
               - name: Set up Docker Buildx
@@ -142,8 +142,8 @@ jobs:
                   MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
                   GITHUB_RUN_ID: ${{ github.run_id }}
                 run: |
-                  chmod +x tests/test_container.sh 
-                  bash tests/test_container.sh     
+                  chmod +x tests/test_container.sh
+                  bash tests/test_container.sh
 
               - name: Push Docker image
                 if: success()
@@ -158,19 +158,25 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - uses: actions/checkout@v3 
+      - uses: actions/checkout@v3
 
       - name: Download SHA artifact
         uses: actions/download-artifact@v4
         with:
-          name: sha-artifact 
-          path: .          
+          name: sha-artifact
+          path: .
 
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: 'placeholder'
+          known_hosts: 'temporary' # Заменено на шаг ниже
+
+      - name: Add server key to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Deploy to dev server
         env:
@@ -197,10 +203,8 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
         run: |
-          # Читаем SHA из файла артефакта
           SHORT_SHA=$(cat sha.txt)
 
-          # Проверка на пустоту
           if [ -z "$SHORT_SHA" ]; then
             echo "Error: SHORT_SHA is empty (read from artifact file sha.txt). Cannot proceed with deployment."
             exit 1
@@ -243,10 +247,10 @@ jobs:
           EOF
 
           echo "Copying configuration files to dev server..."
-          scp -o StrictHostKeyChecking=no -P "$SSH_PORT" .env.dev.local docker-compose.dev.local "$SSH_TARGET":/tmp/
+          scp -P "$SSH_PORT" .env.dev.local docker-compose.dev.local "$SSH_TARGET":/tmp/
 
           echo "Executing deployment commands on dev server..."
-          ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_TARGET" "
+          ssh -p "$SSH_PORT" "$SSH_TARGET" "
             mkdir -p \"$APP_LOCATION\" && \
             mv /tmp/.env.dev.local \"$APP_LOCATION/.env\" && \
             mv /tmp/docker-compose.dev.local \"$APP_LOCATION/docker-compose.yml\" && \
@@ -262,7 +266,7 @@ jobs:
             echo '--- Deployment logs (dev) ---' && \
             docker compose logs --tail 50
           "
-          rm .env.dev.local docker-compose.dev.local sha.txt # Удаляем локальные временные файлы
+          rm .env.dev.local docker-compose.dev.local sha.txt
 
   deploy-base:
             needs: build-and-test-container
@@ -270,19 +274,25 @@ jobs:
             runs-on: ubuntu-latest
             environment: base
             steps:
-              - uses: actions/checkout@v3 # Может не требоваться
+              - uses: actions/checkout@v3
 
               - name: Download SHA artifact
                 uses: actions/download-artifact@v4
                 with:
-                  name: sha-artifact # Имя артефакта для скачивания
-                  path: .           # Скачать в текущую директорию
+                  name: sha-artifact
+                  path: .
 
               - name: Install SSH key
                 uses: shimataro/ssh-key-action@v2
                 with:
                   key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
-                  known_hosts: 'placeholder'
+                  known_hosts: 'temporary' # Заменено на шаг ниже
+
+              - name: Add server key to known_hosts
+                run: |
+                  mkdir -p ~/.ssh
+                  echo "${{ secrets.BASE_KNOWN_HOSTS }}" >> ~/.ssh/known_hosts
+                  chmod 644 ~/.ssh/known_hosts
 
               - name: Deploy to base server using Docker Compose
                 env:
@@ -309,10 +319,8 @@ jobs:
                   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
                   DOCKER_IMAGE_NAME: ${{ env.DOCKER_IMAGE_NAME }}
                 run: |
-                      # Читаем SHA из файла артефакта
                       SHORT_SHA=$(cat sha.txt)
 
-                      # Проверка на пустоту
                       if [ -z "$SHORT_SHA" ]; then
                         echo "Error: SHORT_SHA is empty (read from artifact file sha.txt). Cannot proceed with deployment."
                         exit 1
@@ -357,10 +365,10 @@ jobs:
                       EOF
 
                       echo "Copying configuration files to base server..."
-                      scp -o StrictHostKeyChecking=no -P "$SSH_PORT" .env.base.local docker-compose.base.local "$SSH_TARGET":/tmp/
+                      scp -P "$SSH_PORT" .env.base.local docker-compose.base.local "$SSH_TARGET":/tmp/
 
                       echo "Executing deployment commands on base server..."
-                      ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_TARGET" "
+                      ssh -p "$SSH_PORT" "$SSH_TARGET" "
                         mkdir -p \"$APP_LOCATION\" && \
                         mv /tmp/.env.base.local \"$APP_LOCATION/.env\" && \
                         mv /tmp/docker-compose.base.local \"$APP_LOCATION/docker-compose.yml\" && \
@@ -376,4 +384,4 @@ jobs:
                         echo '--- Deployment logs (base) ---' && \
                         docker compose logs --tail 50
                       "
-                      rm .env.base.local docker-compose.base.local sha.txt 
+                      rm .env.base.local docker-compose.base.local sha.txt
