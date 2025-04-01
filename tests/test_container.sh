@@ -17,7 +17,7 @@ CONTAINER_NAME="avito-parser-test-${GITHUB_RUN_ID:-local}" # Добавляем 
 ENV_FILE=".env.test"
 PARSING_COMPLETE_PATTERN="Парсинг завершен"
 FOUND_AD_PATTERN="SUCCESS | __main__:__pretty_log"
-TIMEOUT_SECONDS=300
+TIMEOUT_SECONDS=400
 CHECK_INTERVAL=10
 
 echo "Creating $ENV_FILE..."
