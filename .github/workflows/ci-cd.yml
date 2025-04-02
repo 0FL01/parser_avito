@@ -145,6 +145,13 @@ jobs:
                   chmod +x tests/test_container.sh
                   bash tests/test_container.sh
 
+              - name: Push Docker image to Docker Hub
+                uses: docker/build-push-action@v4
+                with:
+                  push: true 
+                  tags: | 
+                    ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}
+
   deploy-dev:
     needs: build-and-test-container
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
