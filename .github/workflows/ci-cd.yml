@@ -140,17 +140,10 @@ jobs:
                   FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
                   KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
                   MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
-                  GITHUB_RUN_ID: ${{ github.run_id }}
+                  GITHUB_RUN_ID: ${{ github.run_id }} 
                 run: |
                   chmod +x tests/test_container.sh
                   bash tests/test_container.sh
-
-              - name: Push Docker image
-                if: success()
-                run: |
-                  IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
-                  echo "Pushing image ${IMAGE_TAG}..."
-                  docker push ${IMAGE_TAG}
 
   deploy-dev:
     needs: build-and-test-container
