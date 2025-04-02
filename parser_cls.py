@@ -90,15 +90,19 @@ class AvitoParse:
             if self.stop_event.is_set():
                 break
             try:
-                time.sleep(0.5)  # Small delay before scrolling
-                # Scroll in smaller increments to be gentler on slower machines
-                self.driver.execute_script("window.scrollBy(0, 500);")
-                time.sleep(0.5)  # Small delay after scrolling
+                # Делаем скроллинг более плавным и добавляем больше пауз
+                for _ in range(5):  # Разбиваем скроллинг на 5 мелких шагов
+                    time.sleep(1)  # Увеличиваем задержку перед скроллингом
+                    # Меньший инкремент для более плавного скроллинга
+                    self.driver.execute_script("window.scrollBy(0, 100);")
+                time.sleep(1)  # Пауза после скроллинга
             except Exception as e:
                 logger.debug(f"Scroll error: {e}")
+                # Делаем паузу перед повторной попыткой
+                time.sleep(3)
                 continue  # Skip to next iteration if scroll fails
             self.__parse_page()
-            time.sleep(random.randint(2, 4))
+            time.sleep(random.randint(3, 5))  # Увеличиваем паузу перед переходом на следующую страницу
             self.open_next_btn()
         return
 
