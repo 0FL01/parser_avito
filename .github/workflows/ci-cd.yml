@@ -124,14 +124,14 @@ jobs:
                 id: test_container
                 env:
                   IMAGE_TAG: "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
-                  URL_AVITO: ${{ secrets.URL_AVITO }}
-                  CHAT_ID_TG: ${{ secrets.CHAT_ID_TG }}
+                  URL_AVITO: ${{ secrets.URL_AVITO_TEST }}
+                  CHAT_ID_TG: ${{ secrets.CHAT_ID_TG_TEST }}
                   TG_TOKEN: ${{ secrets.TG_TOKEN }}
                   NUM_ADS_AVITO: ${{ secrets.NUM_ADS_AVITO }}
                   FREQ_AVITO: ${{ secrets.FREQ_AVITO }}
-                  KEYS_AVITO: ${{ secrets.KEYS_AVITO }}
-                  MAX_PRICE_AVITO: ${{ secrets.MAX_PRICE_AVITO }}
-                  MIN_PRICE_AVITO: ${{ secrets.MIN_PRICE_AVITO }}
+                  KEYS_AVITO: ${{ secrets.KEYS_AVITO_TEST }}
+                  MAX_PRICE_AVITO: ${{ secrets.MAX_PRICE_AVITO_TEST }}
+                  MIN_PRICE_AVITO: ${{ secrets.MIN_PRICE_AVITO_TEST }}
                   GEO_AVITO: ${{ secrets.GEO_AVITO }}
                   PROXY_AVITO: ${{ secrets.PROXY_AVITO }}
                   PROXY_CHANGE_IP_AVITO: ${{ secrets.PROXY_CHANGE_IP_AVITO }}
@@ -140,7 +140,7 @@ jobs:
                   FAST_SPEED_AVITO: ${{ secrets.FAST_SPEED_AVITO }}
                   KEYS_BLACK_AVITO: ${{ secrets.KEYS_BLACK_AVITO }}
                   MAX_VIEW_AVITO: ${{ secrets.MAX_VIEW_AVITO }}
-                  GITHUB_RUN_ID: ${{ github.run_id }} 
+                  GITHUB_RUN_ID: ${{ github.run_id }}
                 run: |
                   chmod +x tests/test_container.sh
                   bash tests/test_container.sh
