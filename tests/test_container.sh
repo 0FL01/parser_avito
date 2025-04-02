@@ -20,7 +20,7 @@ CHECK_INTERVAL_TEST=10
 echo "Создание файла $ENV_FILE_TEST..."
 {
   echo "URL_AVITO=$URL_AVITO"
-  echo "CHAT_ID_TG=$CHAT_ID_TG"
+  echo "CHAT_ID_TG="
   echo "TG_TOKEN=$TG_TOKEN"
   echo "NUM_ADS_AVITO=$NUM_ADS_AVITO"
   echo "FREQ_AVITO=$FREQ_AVITO"
