@@ -14,7 +14,7 @@ if [ -z "$TG_TOKEN" ]; then echo "Ошибка: TG_TOKEN не установле
 CONTAINER_NAME_TEST="avito-parser-test-${GITHUB_RUN_ID:-local}"
 ENV_FILE_TEST=".env.test"
 FOUND_AD_PATTERN_TEST="SUCCESS | __main__:__pretty_log"
-TIMEOUT_SECONDS_TEST=400
+TIMEOUT_SECONDS_TEST=60
 CHECK_INTERVAL_TEST=10
 
 echo "Создание файла $ENV_FILE_TEST..."
