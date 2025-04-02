@@ -126,7 +126,7 @@ jobs:
                   IMAGE_TAG: "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.vars.outputs.sha_short }}"
                   URL_AVITO: ${{ secrets.URL_AVITO_TEST }}
                   CHAT_ID_TG: ${{ secrets.CHAT_ID_TG_TEST }}
-                  TG_TOKEN: ${{ secrets.TG_TOKEN }}
+                  TG_TOKEN: ${{ secrets.TG_TOKEN_TEST }}
                   NUM_ADS_AVITO: ${{ secrets.NUM_ADS_AVITO }}
                   FREQ_AVITO: ${{ secrets.FREQ_AVITO }}
                   KEYS_AVITO: ${{ secrets.KEYS_AVITO_TEST }}
