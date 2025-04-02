@@ -286,13 +286,6 @@ jobs:
               - name: Install SSH key
                 uses: shimataro/ssh-key-action@v2
                 with:
-                    key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
-
-                    known_hosts: ${{ secrets.BASE_KNOWN_HOSTS }}
-
-              - name: Install SSH key
-                uses: shimataro/ssh-key-action@v2
-                with:
                   key: ${{ secrets.SSH_PRIVATE_KEY_BASE }}
                   known_hosts: 'temporary'
                   if_key_exists: replace
